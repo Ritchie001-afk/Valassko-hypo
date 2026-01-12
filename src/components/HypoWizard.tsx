@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import { MapPin, Home, Banknote, ShieldCheck, ArrowRight, Loader2, ChevronLeft, Map } from 'lucide-react';
 import { calculateAffordability, PropertyType } from '@/utils/calculator';
+import { formatThousand, parseThousand } from '@/utils/format';
 import { TownId, REGIONS, RegionId, MARKET_MAP } from '@/data/market-config';
 
 const PROPERTY_TYPES: { label: string; value: PropertyType }[] = [
-    { label: 'Byt', value: 'Byt' },
+    { label: 'Byt (po rekonstrukci)', value: 'Byt (rekonstruovaný)' },
+    { label: 'Byt (v původním stavu)', value: 'Byt (původní stav)' },
     { label: 'Starší dům', value: 'Starší dům' },
     { label: 'Novostavba', value: 'Stavba domu' },
     { label: 'Rekonstrukce', value: 'Rekonstrukce' },
@@ -29,6 +31,8 @@ export default function HypoWizard() {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
+    const [wantAgentOffers, setWantAgentOffers] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
 
     // Result
     const [result, setResult] = useState<ReturnType<typeof calculateAffordability> | null>(null);
@@ -53,26 +57,26 @@ export default function HypoWizard() {
         e.preventDefault();
         setIsSubmitting(true);
 
-        try {
-            const payload = {
-                type: 'mortgage',
-                contact: { name, phone, email },
-                calculation: {
-                    region: selectedRegion,
-                    location: location,
-                    propertyType: propertyType,
-                    areaSize: areaSize || (propertyType === 'Byt' ? 70 : 120),
-                    income,
-                    cash
-                },
-                result: {
-                    isSuccess: result?.status === 'YES', // Simplified Result Status
-                    maxLoan: result?.maxLoan,
-                    failReason: result?.failReason,
-                    maxAffordableM2: result?.maxAffordableM2
-                }
-            };
+        const payload = {
+            type: 'mortgage',
+            contact: { name, email, phone, wantAgentOffers },
+            calculation: {
+                location,
+                region: selectedRegion,
+                propertyType,
+                areaSize: areaSize || (propertyType?.includes('Byt') ? 70 : 120),
+                income,
+                cash
+            },
+            result: {
+                isSuccess: result?.status === 'YES',
+                maxLoan: result?.maxLoan,
+                failReason: result?.failReason,
+                maxAffordableM2: result?.maxAffordableM2
+            }
+        };
 
+        try {
             const response = await fetch('/api/send-lead', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -80,14 +84,15 @@ export default function HypoWizard() {
             });
 
             if (response.ok) {
-                alert(`Děkujeme, ${name}. Poptávka byla úspěšně odeslána. Ozveme se vám na ${phone}.`);
-                // Optional: Reset form or close modal? For now, just keeping it simple.
+                setSubmitted(true);
             } else {
-                throw new Error('Submission failed');
+                const data = await response.json();
+                console.error('Submission error:', data);
+                alert(`Chyba: ${data.error || 'Neznámá chyba'}`);
             }
         } catch (error) {
-            console.error(error);
-            alert('Omlouváme se, došlo k chybě při odesílání. Zkuste to prosím znovu.');
+            console.error('Network error:', error);
+            alert('Chyba připojení. Zkuste to prosím znovu.');
         } finally {
             setIsSubmitting(false);
         }
@@ -151,7 +156,7 @@ export default function HypoWizard() {
     };
 
     const renderStep2 = () => {
-        const isFlat = propertyType === 'Byt';
+        const isFlat = propertyType?.includes('Byt');
         const isLand = propertyType === 'Pozemek';
 
         const defaultSize = isLand ? 1000 : (isFlat ? 70 : 120);
@@ -181,7 +186,7 @@ export default function HypoWizard() {
                                     onClick={() => {
                                         setPropertyType(type.value);
                                         // Reset size to sensible default
-                                        setAreaSize(type.value === 'Pozemek' ? 1000 : (type.value === 'Byt' ? 70 : 120));
+                                        setAreaSize(type.value === 'Pozemek' ? 1000 : (type.value.includes('Byt') ? 70 : 120));
                                     }}
                                     className={`p-4 rounded-xl border-2 text-left transition-all hover:shadow-md ${propertyType === type.value
                                         ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-md'
@@ -215,9 +220,9 @@ export default function HypoWizard() {
                                     />
                                     <div className="min-w-[120px] relative">
                                         <input
-                                            type="number"
-                                            value={currentSize}
-                                            onChange={(e) => setAreaSize(Number(e.target.value))}
+                                            type="text"
+                                            value={formatThousand(currentSize)}
+                                            onChange={(e) => setAreaSize(parseThousand(e.target.value))}
                                             className="w-full pl-3 pr-10 py-2 text-right font-bold text-xl text-emerald-700 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">m²</span>
@@ -275,10 +280,9 @@ export default function HypoWizard() {
                         />
                         <div className="min-w-[140px] relative">
                             <input
-                                type="number"
-                                step={1000}
-                                value={income}
-                                onChange={(e) => setIncome(Number(e.target.value))}
+                                type="text"
+                                value={formatThousand(income)}
+                                onChange={(e) => setIncome(parseThousand(e.target.value))}
                                 className="w-full pl-3 pr-14 py-2 text-right font-bold text-xl text-emerald-700 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                             />
                             <span className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">Kč</span>
@@ -294,10 +298,9 @@ export default function HypoWizard() {
                     </label>
                     <div className="relative">
                         <input
-                            type="number"
-                            step={10000}
-                            value={cash}
-                            onChange={(e) => setCash(Number(e.target.value))}
+                            type="text"
+                            value={formatThousand(cash)}
+                            onChange={(e) => setCash(parseThousand(e.target.value))}
                             className="block w-full rounded-lg border-2 border-slate-200 pl-4 pr-16 py-3 text-lg font-semibold focus:border-emerald-500 focus:ring-emerald-500 outline-none"
                         />
                         <div className="absolute inset-y-0 right-12 flex items-center pointer-events-none text-slate-400 font-bold">
@@ -336,7 +339,7 @@ export default function HypoWizard() {
         let title = "Výpočet je hotový!";
         let description = `Pro lokalitu <strong>${location}</strong> (${areaSize || 'standard'} m²) a váš příjem jsme našli řešení.`;
         let icon = <ShieldCheck className="w-8 h-8 text-emerald-600" />;
-        let buttonText = "Zobrazit můj výsledek";
+        let buttonText = "Chci poslat detailní nabídku";
         let bgColor = "bg-emerald-100";
 
         if (!isSuccess) {
@@ -358,16 +361,15 @@ export default function HypoWizard() {
             }
 
             description += "<br><br><strong>Domluvte si nezávaznou schůzku pro nalezení řešení.</strong>";
-            buttonText = "Chci najít řešení (Schůzka)";
+            buttonText = "Chci detailní nabídku (Schůzka)";
             icon = <Banknote className="w-8 h-8 text-amber-600" />;
             bgColor = "bg-amber-100";
         }
 
         return (
             <div className="relative max-w-2xl mx-auto py-10 animate-in zoom-in-95 duration-500">
-                {/* BLURRED BACKGROUND CONTENT (Fake data based on result) */}
+                {/* BLURRED BACKGROUND CONTENT */}
                 <div className="absolute inset-0 z-0 bg-white p-6 rounded-3xl border border-slate-200 blur-sm scale-[1.02] opacity-50 select-none overflow-hidden flex flex-col items-center justify-center">
-                    {/* Show something that looks like "Failure" or "Success" vaguely */}
                     {isSuccess ? (
                         <>
                             <div className="text-6xl font-bold text-slate-300 mb-4">{result.maxLoan.toLocaleString()} Kč</div>
@@ -421,6 +423,22 @@ export default function HypoWizard() {
                             />
                         </div>
 
+                        {/* Agent Offers Checkbox (Coming Soon) */}
+                        <div className="flex items-start gap-3 text-left bg-slate-50 p-3 rounded-lg border border-slate-100 opacity-70">
+                            <input
+                                type="checkbox"
+                                id="agentOffers"
+                                disabled
+                                checked={false}
+                                className="mt-1 w-5 h-5 text-slate-400 rounded border-slate-300 cursor-not-allowed"
+                            />
+                            <label htmlFor="agentOffers" className="text-sm text-slate-500 cursor-not-allowed">
+                                <strong>Chci nabídky nemovitostí od makléřů.</strong> <span className="text-xs uppercase bg-amber-100 text-amber-600 px-2 py-0.5 rounded ml-1 font-bold">Coming Soon</span>
+                                <br />
+                                <span className="text-slate-400 text-xs text-opacity-80">Můžete dostat neveřejné nabídky dříve než ostatní.</span>
+                            </label>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={isSubmitting}
@@ -449,12 +467,66 @@ export default function HypoWizard() {
                 </div>
 
                 <div className="transition-all duration-300">
-                    {step === 1 && renderStep1()}
-                    {step === 1.5 && renderStep1_5()}
-                    {step === 2 && renderStep2()}
-                    {step === 3 && renderStep3()}
-                    {step === 10 && renderLoader()}
-                    {step === 11 && renderResult()}
+                    {submitted ? (
+                        <div className="max-w-2xl mx-auto py-12 text-center animate-in zoom-in-95 duration-500">
+                            <div className="bg-white p-8 rounded-3xl border-2 border-emerald-100 shadow-xl">
+                                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <ShieldCheck className="w-10 h-10 text-emerald-600" />
+                                </div>
+                                <h2 className="text-3xl font-bold text-slate-900 mb-4">Poptávka odeslána!</h2>
+                                <p className="text-lg text-slate-600 mb-8">
+                                    Výsledek jsme poslali na <strong>{email}</strong>. {wantAgentOffers ? 'Zároveň jsme aktivovali vyhledávání nabídek u místních makléřů.' : 'Ozveme se vám co nejdříve.'}
+                                </p>
+
+                                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-left mb-8">
+                                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <Banknote className="w-5 h-5 text-emerald-600" /> Předběžné varianty splátek
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {[15, 20, 25, 30].map(years => {
+                                            const rate = 0.048; // Common rate
+                                            const monthlyRate = rate / 12;
+                                            const payments = years * 12;
+                                            const loan = result?.maxLoan || 0;
+                                            const monthlyPayment = Math.round(loan * (monthlyRate * Math.pow(1 + monthlyRate, payments)) / (Math.pow(1 + monthlyRate, payments) - 1));
+                                            const isFeasible = monthlyPayment / income <= 0.45;
+
+                                            return (
+                                                <div key={years} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                                                    <div>
+                                                        <span className="font-semibold text-slate-700">{years} let</span>
+                                                        {!isFeasible && <span className="ml-2 text-[10px] bg-red-50 text-red-500 px-2 py-0.5 rounded font-bold uppercase">Limit příjmů</span>}
+                                                    </div>
+                                                    <div className={`text-lg font-bold ${isFeasible ? 'text-emerald-700' : 'text-slate-300 line-through'}`}>
+                                                        {monthlyPayment.toLocaleString()} Kč / měs.
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="mt-4 text-[11px] text-slate-400 italic">
+                                        * Výpočet je orientační. Přesnou nabídku získáte po individuálním posouzení v bance. U variant označených "Limit příjmů" může být vyžadována další bonita nebo více úspor.
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="text-emerald-600 font-semibold hover:underline"
+                                >
+                                    Zkusit jiný výpočet
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {step === 1 && renderStep1()}
+                            {step === 1.5 && renderStep1_5()}
+                            {step === 2 && renderStep2()}
+                            {step === 3 && renderStep3()}
+                            {step === 10 && renderLoader()}
+                            {step === 11 && renderResult()}
+                        </>
+                    )}
                 </div>
             </div>
         </div>

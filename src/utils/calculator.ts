@@ -1,6 +1,6 @@
 import { BANK_CONSTANTS, MARKET_MAP, TownId, RENOVATION_COST_PER_M2 } from '@/data/market-config';
 
-export type PropertyType = 'Byt' | 'Starší dům' | 'Stavba domu' | 'Rekonstrukce' | 'Pozemek';
+export type PropertyType = 'Byt (rekonstruovaný)' | 'Byt (původní stav)' | 'Starší dům' | 'Stavba domu' | 'Rekonstrukce' | 'Pozemek';
 
 export interface AffordabilityResult {
     status: 'YES' | 'MAYBE' | 'NO';
@@ -39,7 +39,7 @@ export const calculateAffordability = (
     // Determine Area Size
     let areaSize = userAreaM2;
     if (areaSize === 0) {
-        if (propertyType === 'Byt') areaSize = CONSTANTS.FLAT_SIZE_M2;
+        if (propertyType.includes('Byt')) areaSize = CONSTANTS.FLAT_SIZE_M2;
         else if (propertyType === 'Pozemek') areaSize = CONSTANTS.LAND_SIZE_M2;
         else areaSize = CONSTANTS.HOUSE_SIZE_M2;
     }
@@ -49,8 +49,11 @@ export const calculateAffordability = (
     let basePrice = 0; // Fixed costs like land
 
     switch (propertyType) {
-        case 'Byt':
+        case 'Byt (rekonstruovaný)':
             effectivePricePerM2 = marketData.flat_renovated;
+            break;
+        case 'Byt (původní stav)':
+            effectivePricePerM2 = marketData.flat_old;
             break;
         case 'Starší dům':
             effectivePricePerM2 = marketData.house_old;

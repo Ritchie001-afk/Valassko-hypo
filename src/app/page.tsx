@@ -4,6 +4,7 @@ import HypoWizard from '@/components/HypoWizard';
 import ClassicMortgageCalculator from '@/components/ClassicMortgageCalculator';
 import ServicesSection from '@/components/ServicesSection';
 import InsuranceQuickForm from '@/components/InsuranceQuickForm';
+import AgentPromo from '@/components/AgentPromo';
 import { useState } from 'react';
 import { Home as HomeIcon, Calculator } from 'lucide-react';
 
@@ -32,8 +33,8 @@ export default function Home() {
           <button
             onClick={() => setCalculatorMode('property')}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${calculatorMode === 'property'
-                ? 'bg-emerald-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white'
+              ? 'bg-emerald-600 text-white shadow-lg'
+              : 'text-slate-400 hover:text-white'
               }`}
           >
             <HomeIcon className="w-5 h-5" /> Podle nemovitosti
@@ -41,8 +42,8 @@ export default function Home() {
           <button
             onClick={() => setCalculatorMode('classic')}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${calculatorMode === 'classic'
-                ? 'bg-emerald-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white'
+              ? 'bg-emerald-600 text-white shadow-lg'
+              : 'text-slate-400 hover:text-white'
               }`}
           >
             <Calculator className="w-5 h-5" /> Vím, kolik potřebuju
@@ -50,9 +51,11 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="-mt-16 mb-20 relative z-10 px-4">
+      <div className="-mt-16 mb-8 relative z-10 px-4">
         {calculatorMode === 'property' ? <HypoWizard /> : <ClassicMortgageCalculator />}
       </div>
+
+      <AgentPromo />
 
       {/* Insurance Cross-sell */}
       <ServicesSection onSelectService={handleServiceSelect} />

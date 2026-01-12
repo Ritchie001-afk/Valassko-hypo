@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing contact info' }, { status: 400 });
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = process.env.RESEND_API_KEY || 're_CRpDNTGp_F8VyYSvEnW6RiSxh1Z123MMd';
     if (!apiKey) {
       console.error('RESEND_API_KEY is missing');
       return NextResponse.json({ error: 'Server misconfiguration (Missing API Key)' }, { status: 500 });
@@ -36,6 +36,11 @@ export async function POST(req: NextRequest) {
                   <p><strong>Jméno:</strong> ${contact.name}</p>
                   <p><strong>Email:</strong> <a href="mailto:${contact.email}">${contact.email}</a></p>
                   <p><strong>Telefon:</strong> <a href="tel:${contact.phone}">${contact.phone || 'Neuveden'}</a></p>
+                  <p><strong>Chci nabídky nemovitostí:</strong> 
+                    <span style="font-weight: bold; color: ${contact.wantAgentOffers ? '#059669' : '#64748b'};">
+                        ${contact.wantAgentOffers ? 'ANO ✅' : 'NE'}
+                    </span>
+                  </p>
                 </div>
 
                 <div style="border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
@@ -86,10 +91,10 @@ export async function POST(req: NextRequest) {
         `;
 
     // Fallback owner email from env or default
-    const ownerEmail = process.env.OWNER_EMAIL || 'tomas@example.com';
+    const ownerEmail = process.env.OWNER_EMAIL || 'reich.tomas@gmail.com';
 
     const data = await resend.emails.send({
-      from: 'Hypo Valašsko <onboarding@resend.dev>',
+      from: 'onboarding@resend.dev',
       to: [ownerEmail],
       subject: subject,
       html: emailHtml,
