@@ -479,15 +479,18 @@ export default function HypoWizard() {
                                 </p>
 
                                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-left mb-8">
-                                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <Banknote className="w-5 h-5 text-emerald-600" /> Předběžné varianty splátek
+                                    <h3 className="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                        <Banknote className="w-5 h-5 text-emerald-600" /> Splátka pro vybranou nemovitost
                                     </h3>
+                                    <p className="text-[11px] text-slate-500 mb-4 block">
+                                        Pro úvěr <strong>{result?.loanNeeded.toLocaleString()} Kč</strong> a odhadovanou cenu {result?.marketPrice.toLocaleString()} Kč.
+                                    </p>
                                     <div className="space-y-3">
                                         {[15, 20, 25, 30].map(years => {
                                             const rate = 0.048; // Common rate
                                             const monthlyRate = rate / 12;
                                             const payments = years * 12;
-                                            const loan = result?.maxLoan || 0;
+                                            const loan = result?.loanNeeded || 0;
                                             const monthlyPayment = Math.round(loan * (monthlyRate * Math.pow(1 + monthlyRate, payments)) / (Math.pow(1 + monthlyRate, payments) - 1));
                                             const isFeasible = monthlyPayment / income <= 0.45;
 

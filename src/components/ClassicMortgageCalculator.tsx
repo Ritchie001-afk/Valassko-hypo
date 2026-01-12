@@ -110,9 +110,12 @@ export default function ClassicMortgageCalculator() {
                 </div>
 
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-left my-8">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <h3 className="font-bold text-slate-800 mb-1 flex items-center gap-2">
                         <Banknote className="w-5 h-5 text-emerald-600" /> Varianty splátek (orientační)
                     </h3>
+                    <p className="text-[11px] text-slate-500 mb-4 block">
+                        Pro požadovaný úvěr <strong>{desiredLoan.toLocaleString()} Kč</strong>.
+                    </p>
                     <div className="space-y-3">
                         {[15, 20, 25, 30].map(years => {
                             const rate = 0.048;

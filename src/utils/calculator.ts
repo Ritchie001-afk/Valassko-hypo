@@ -5,6 +5,7 @@ export type PropertyType = 'Byt (rekonstruovaný)' | 'Byt (původní stav)' | 'S
 export interface AffordabilityResult {
     status: 'YES' | 'MAYBE' | 'NO';
     maxLoan: number;
+    loanNeeded: number;
     marketPrice: number;
     totalBudget: number;
     failReason?: 'LTV' | 'DSTI' | 'BUDGET';
@@ -118,9 +119,12 @@ export const calculateAffordability = (
         }
     }
 
+    const loanNeeded = Math.max(0, marketPrice - cash);
+
     return {
         status,
         maxLoan,
+        loanNeeded,
         marketPrice,
         totalBudget,
         failReason,
