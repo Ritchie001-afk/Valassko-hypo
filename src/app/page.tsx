@@ -22,6 +22,28 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FinancialProduct",
+            name: "Hypotéka Valašsko",
+            description:
+              "Nezávislé srovnání hypoték a refinancování pro oblast Valašska (Rožnov, Vsetín, Valmez).",
+            provider: {
+              "@type": "Organization",
+              name: "Finance Valašsko",
+              url: "https://finance-valassko.cz",
+            },
+            areaServed: {
+              "@type": "Place",
+              name: "Valašsko",
+            },
+            serviceType: "Mortgage Broker",
+          }),
+        }}
+      />
 
       {/* Hero Tabs */}
       <div className="bg-slate-900 pt-12 pb-20 px-4 text-center">
@@ -64,8 +86,12 @@ export default function Home() {
       <InsuranceQuickForm initialTopic={selectedTopic} />
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm">
-        <p>© 2026 Hypo Valašsko. Všechna práva vyhrazena.</p>
+      <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm px-4">
+        <p className="mb-2">© 2026 Hypo Valašsko. Všechna práva vyhrazena.</p>
+        <p className="mb-4 text-slate-500 text-xs">Výpočty jsou pouze orientační a neslouží jako návrh na uzavření smlouvy.</p>
+        <p className="text-slate-600 text-xs">
+          Pwrd by Stavrex.cz
+        </p>
       </footer>
     </main>
   );
