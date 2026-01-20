@@ -69,6 +69,7 @@ export const metadata: Metadata = {
   },
 };
 
+import Script from "next/script";
 import CookieConsent from "@/components/CookieConsent";
 
 // ... imports remain the same
@@ -83,6 +84,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-HT013R9943"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-HT013R9943');
+          `}
+        </Script>
         {children}
         <CookieConsent />
       </body>
